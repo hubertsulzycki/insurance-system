@@ -1,0 +1,22 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:tns="http://insurance.com/soap-mock/flights"
+           targetNamespace="http://insurance.com/soap-mock/flights"
+           elementFormDefault="qualified">
+
+    <xs:element name="GetFlightRequest">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="flightNumber" type="xs:string"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="GetFlightResponse">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="exists" type="xs:boolean"/>
+                <xs:element name="details" type="xs:string"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+</xs:schema>

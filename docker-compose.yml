@@ -1,0 +1,100 @@
+version: '3.8'
+
+services:
+  # 1. Zookeeper - niezbędny do działania Kafki (koordynuje brokera)
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    networks:
+      - insurance-network
+
+  # 2. Kafka Broker
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"   # Port dla komunikacji wewnątrz sieci Docker
+      - "29092:29092" # Port dla Twojego IDE (Host)
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      # Konfiguracja nasłuchiwania - kluczowa sprawa w Dockerze:
+      # INTERNAL: komunikacja między kontenerami (policy-service -> kafka)
+      # EXTERNAL: komunikacja z Twojego komputera (IntelliJ -> kafka)
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    networks:
+      - insurance-network
+
+  # 3. Kafdrop - Interfejs WWW do podglądu Kafki
+  kafdrop:
+    image: obsidiandynamics/kafdrop
+    container_name: kafdrop
+    depends_on:
+      - kafka
+    ports:
+      - "9000:9000"
+    environment:
+      KAFKA_BROKERCONNECT: kafka:9092
+      JVM_OPTS: "-Xms32M -Xmx64M"
+    networks:
+      - insurance-network
+
+  soap-mock:
+    build: ./soap-mock  # Zakładam, że folder nazywa się soap-mock
+    container_name: soap-mock
+    ports:
+      - "8081:8081" # Możemy zostawić wystawione do testów
+    networks:
+      - insurance-network
+
+  policy-service:
+    build: ./policy-service
+    container_name: policy-service
+    depends_on:
+      - kafka
+      - soap-mock
+    environment:
+      SERVER_PORT: 8082
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      # Adres mocka wewnątrz sieci dockerowej:
+      SOAP_SERVICE_URL: http://soap-mock:8081/ws
+    networks:
+      - insurance-network
+
+  sales-service:
+    build: ./sales-service
+    container_name: sales-service
+    depends_on:
+      - kafka
+      - policy-service
+    environment:
+      SERVER_PORT: 8083
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+    networks:
+      - insurance-network
+
+  api-gateway:
+    build: ./api-gateway
+    container_name: api-gateway
+    depends_on:
+      - sales-service
+    ports:
+      - "8080:8080" # TO JEST JEDYNY PORT DLA UŻYTKOWNIKA KOŃCOWEGO
+    networks:
+      - insurance-network
+
+# Wspólna sieć dla wszystkich usług
+networks:
+  insurance-network:
+    driver: bridge
+

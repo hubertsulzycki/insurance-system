@@ -1,0 +1,16 @@
+server:
+  port: 8080  # Brama wystawia się na zewnątrz na porcie 8080
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      routes:
+        # Trasa do Sales Service
+        - id: sales-service-route
+          # Używamy nazwy serwisu z docker-compose (sales-service)
+          # Port 8083 to wewnętrzny port sales-service (ustalimy go w docker-compose)
+          uri: http://sales-service:8083
+          predicates:
+            - Path=/api/sales/**
