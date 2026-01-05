@@ -16,7 +16,7 @@ public class FlightClient extends WebServiceGatewaySupport {
         // 2. Wysyłamy i czekamy na odpowiedź (Marshal -> Send -> Receive -> Unmarshal)
         // Adres Mocka to http://localhost:8081/ws
         GetFlightResponse response = (GetFlightResponse) getWebServiceTemplate()
-                .marshalSendAndReceive("http://localhost:8081/ws", request);
+                .marshalSendAndReceive(request);
 
         // 3. Zwracamy wynik (czy lot istnieje?)
         return response.isExists();

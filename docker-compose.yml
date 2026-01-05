@@ -65,7 +65,7 @@ services:
       - soap-mock
     environment:
       SERVER_PORT: 8082
-      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       # Adres mocka wewnątrz sieci dockerowej:
       SOAP_SERVICE_URL: http://soap-mock:8081/ws
     networks:
@@ -79,7 +79,9 @@ services:
       - policy-service
     environment:
       SERVER_PORT: 8083
-      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    ports:
+      - "8083:8083"
     networks:
       - insurance-network
 
